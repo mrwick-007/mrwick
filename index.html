@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mrwick</title>
+  <title>mr wick</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
@@ -142,29 +142,38 @@
     const bgMusic = document.getElementById('bg-music');
     const volumeSlider = document.getElementById('volume-slider');
 
-    // Only list available songs; others can be added later
     const songs = ['background.mp3'];
 
-    // Simulate type-delete animation in title only
-    const animatedTitle = "mrwick007";
-    let titleIndex = 0;
-    let typingForward = true;
+    // CLEAN FIXED ANIMATED TITLE WITH CURSOR (NO URL FLASH)
+    const phrases = ["mr wick", "welcome agent", "guns loaded"];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let cursorVisible = true;
 
     function animateTitle() {
-      document.title = animatedTitle.slice(0, titleIndex);
-      if (typingForward) {
-        titleIndex++;
-        if (titleIndex > animatedTitle.length) {
-          typingForward = false;
-          setTimeout(animateTitle, 1000);
-          return;
-        }
-      } else {
-        titleIndex--;
-        if (titleIndex === 0) typingForward = true;
+      const currentPhrase = phrases[phraseIndex];
+      let text = currentPhrase.substring(0, charIndex);
+      document.title = text + (cursorVisible ? ' |' : '');
+
+      if (!isDeleting && charIndex < currentPhrase.length) {
+        charIndex++;
+      } else if (isDeleting && charIndex > 0) {
+        charIndex--;
+      } else if (!isDeleting && charIndex === currentPhrase.length) {
+        setTimeout(() => isDeleting = true, 1000);
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
       }
-      setTimeout(animateTitle, 200);
+
+      setTimeout(animateTitle, 150);
     }
+
+    setInterval(() => {
+      cursorVisible = !cursorVisible;
+    }, 500);
+
     animateTitle();
 
     // Audio logic
