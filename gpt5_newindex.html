@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+    Mr Wick – Immersive Interactive Card
+    Built to be a single-file, drop-in replacement for index.html.
+    No external libraries, fonts, or assets required.
+
+    Features
+    - Hero parallax with mouse tilt and depth blur
+    - Cinematic intro gate (“click to enter…”) with sound on/off
+    - Floating glass card with neon glow & soft reflections
+    - Typewriter headline + reactive particle sparks
+    - Keyboard & pointer accessibility
+    - Mobile-friendly responsive layout
+    - Theme switch (Neo/Noir)
+    - Smooth performance (GPU-accelerated, requestAnimationFrame)
+    - Safe fallbacks when audio blocked by browser
+  -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f16" />
+  <title>mr wick</title>
+
+  <style>
+    :root{
+      --bg-deep:#060a10;
+      --bg-deeper:#03060a;
+      --accent:#ff334e;     /* neon red */
+      --accent-2:#17d7ff;   /* cyan rim light */
+      --text:#e8ebf0;
+      --muted:#9aa4b2;
+      --glass:#101523cc;
+      --glass-solid:#111729;
+      --glow:0 0 24px rgba(255,51,78,.35), 0 0 64px rgba(23,215,255,.25);
+      --shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.05);
+      --radius:22px;
+      --blur: 18px;
+      --ring: 1.5px solid rgba(255,255,255,.06);
+      --button-bg: #0f1625;
+      --button-hover:#151e31;
+    }
+    [data-theme="noir"]{
+      --bg-deep:#07040a;
+      --bg-deeper:#050308;
+      --accent:#e71d36;
+      --accent-2:#a7ff83;
+      --glass:#0c0a12cc;
+      --glass-solid:#0f0b16;
+      --glow:0 0 24px rgba(231,29,54,.45), 0 0 64px rgba(167,255,131,.18);
+      --button-bg:#120d1b;
+      --button-hover:#1a1226;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 900px at 15% 10%, #0c1628 0%, rgba(6,10,16,0) 60%),
+        radial-gradient(1100px 800px at 90% 80%, rgba(255,51,78,.18) 0%, rgba(3,6,10,0) 60%),
+        linear-gradient(120deg, var(--bg-deeper), var(--bg-deep) 45%, #0a0f19 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      overflow:hidden;
+    }
+
+    /* Intro Gate */
+    #gate{
+      position:fixed; inset:0; z-index:40;
+      display:flex; align-items:center; justify-content:center;
+      background:
+        radial-gradient(1400px 900px at 70% 30%, rgba(255,51,78,.25), rgba(255,51,78,0) 60%),
+        radial-gradient(1200px 900px at 20% 80%, rgba(23,215,255,.18), rgba(23,215,255,0) 60%),
+        linear-gradient(120deg, var(--bg-deeper), var(--bg-deep) 45%, #0a0f19 100%);
+      transition:opacity .8s ease, visibility .8s ease, filter .8s ease;
+    }
+    #gate.hidden{opacity:0; visibility:hidden; filter:blur(6px)}
+    .gate-inner{
+      text-align:center;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(17,23,41,.55), rgba(17,23,41,.35));
+      border: var(--ring);
+      border-radius: 18px;
+      padding:28px 30px;
+      box-shadow: var(--shadow), var(--glow);
+      transform: translateY(8px);
+      animation: floaty 3s ease-in-out infinite;
+    }
+    .gate-title{
+      letter-spacing:.12em;
+      text-transform:lowercase;
+      font-weight:700;
+      font-size:22px;
+      color:var(--text);
+      text-shadow:0 0 14px rgba(23,215,255,.35);
+    }
+    .gate-enter{
+      margin-top:14px;
+      display:inline-flex; align-items:center; gap:10px;
+      cursor:pointer; border-radius:999px; padding:12px 18px;
+      background: linear-gradient(180deg, var(--button-bg), #0b1321);
+      border: var(--ring);
+      color:var(--text);
+      transition:transform .18s ease, background .2s ease, box-shadow .2s ease;
+      box-shadow: var(--shadow);
+      user-select:none;
+    }
+    .gate-enter:hover{ transform: translateY(-2px); background: var(--button-hover); box-shadow: var(--shadow), 0 0 24px rgba(23,215,255,.25)}
+    .muted{ color:var(--muted); font-size:12px; margin-top:10px }
+
+    /* HUD controls */
+    .hud{
+      position:fixed; left:16px; top:16px; z-index:30; display:flex; gap:10px;
+      align-items:center;
+    }
+    .hud button{
+      appearance:none; border:var(--ring); background:var(--button-bg);
+      color:var(--text); padding:10px 12px; border-radius:12px; cursor:pointer;
+      transition:transform .18s ease, background .2s ease, box-shadow .2s ease;
+      box-shadow: var(--shadow);
+    }
+    .hud button:hover{ transform: translateY(-1px); background:var(--button-hover)}
+    .hud button:active{ transform: translateY(0) scale(.98)}
+    .hud .pill{ font-size:13px }
+
+    /* Scene */
+    .scene{ position:relative; width:100%; height:100%; perspective: 1200px; overflow:hidden }
+    canvas#sparks{ position:absolute; inset:0; z-index:1; }
+    .hero{
+      position:absolute; inset:-8% -8% -8% -8%; z-index:0;
+      background:
+        radial-gradient(1000px 1400px at 75% 35%, rgba(255,51,78,.35) 0%, rgba(255,51,78,0) 60%),
+        radial-gradient(1200px 1000px at 20% 70%, rgba(23,215,255,.28) 0%, rgba(23,215,255,0) 60%),
+        linear-gradient(110deg, #0a0f19 0%, #0c1220 30%, #160b12 100%);
+      filter: saturate(1.1) contrast(1.02);
+      transform: translateZ(-100px) scale(1.12);
+    }
+    /* Stylized silhouette using CSS only (no images) */
+    .silhouette{
+      position:absolute; inset:0; opacity:.24; mix-blend-mode:screen;
+      background:
+        conic-gradient(from 200deg at 60% 40%, rgba(255,51,78,.85), rgba(23,215,255,.7), rgba(255,51,78,.85)),
+        radial-gradient(1200px 1200px at 60% 40%, #0d0f16 20%, transparent 45%);
+      filter: blur(28px) saturate(1.3);
+      mask-image: radial-gradient(800px 800px at 60% 52%, black 38%, transparent 60%);
+    }
+
+    /* Card */
+    .stage{
+      position:absolute; inset:0; display:grid; place-items:center; z-index:2;
+      pointer-events:none; /* child will re-enable */
+    }
+    .card{
+      pointer-events:auto;
+      width:min(92vw, 640px);
+      border-radius: var(--radius);
+      padding:28px 26px 22px;
+      background:
+        linear-gradient(180deg, rgba(20,28,48,.82), rgba(18,24,44,.62)),
+        radial-gradient(240px 200px at 20% 10%, rgba(23,215,255,.08), transparent 60%),
+        radial-gradient(240px 200px at 80% 90%, rgba(255,51,78,.08), transparent 60%);
+      border: var(--ring);
+      box-shadow: var(--shadow), var(--glow);
+      transform-style: preserve-3d;
+      transform: rotateX(0) rotateY(0) translateZ(0);
+      will-change: transform;
+      transition: box-shadow .25s ease, background .25s ease;
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+    }
+    .rim{
+      position:absolute; inset:-1px; border-radius: inherit; pointer-events:none;
+      background: conic-gradient(from 0deg, rgba(23,215,255,.35), rgba(255,51,78,.35), rgba(23,215,255,.35));
+      filter: blur(22px) opacity(.25);
+      mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      padding:2px;
+    }
+    .gloss{
+      position:absolute; inset:0; border-radius: inherit; pointer-events:none;
+      background:
+        linear-gradient( to bottom, rgba(255,255,255,.12), rgba(255,255,255,0) 22%),
+        radial-gradient(180px 80px at 30% 0%, rgba(255,255,255,.18), rgba(255,255,255,0) 70%);
+      mix-blend-mode: screen; opacity:.55; transform: translateZ(40px);
+    }
+
+    .top{
+      display:flex; align-items:center; gap:16px; margin-bottom:10px; transform: translateZ(30px);
+    }
+    .avatar{
+      width:64px; height:64px; border-radius:50%;
+      background:
+        radial-gradient(110px 110px at 70% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 50%),
+        conic-gradient(from 200deg, rgba(255,51,78,.85), rgba(23,215,255,.85), rgba(255,51,78,.85));
+      box-shadow: 0 0 0 2px rgba(255,255,255,.06), 0 6px 16px rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.12);
+      position:relative; overflow:hidden;
+    }
+    .avatar::after{
+      content:""; position:absolute; inset:0;
+      background: radial-gradient(80px 80px at 65% 35%, rgba(0,0,0,.2), transparent 60%),
+                  radial-gradient(120px 80px at 35% 65%, rgba(0,0,0,.25), transparent 60%);
+      mix-blend-mode:multiply;
+    }
+    .name{
+      font-weight:800; letter-spacing:.12em; text-transform:lowercase;
+      font-size:28px; color:var(--text); text-shadow:0 0 12px rgba(23,215,255,.35);
+    }
+    .tag{
+      font-size:12px; color:var(--muted); letter-spacing:.2em; text-transform:uppercase; margin-top:-2px;
+    }
+    .type{
+      display:inline-block; min-height:26px; margin-top:6px; font-size:14px; color:var(--muted);
+      border-left:2px solid rgba(255,255,255,.08); padding-left:10px;
+    }
+
+    .links{
+      display:grid; gap:10px; margin-top:14px; transform: translateZ(25px);
+    }
+    .btn{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-radius:14px; text-decoration:none; color:var(--text);
+      background: linear-gradient(180deg, var(--button-bg), #0b1321);
+      border: var(--ring);
+      box-shadow: var(--shadow);
+      transition: transform .18s ease, background .2s ease, box-shadow .2s ease, letter-spacing .18s ease;
+    }
+    .btn:hover{ transform: translateY(-2px); background: var(--button-hover); box-shadow: var(--shadow), 0 0 24px rgba(255,51,78,.25)}
+    .btn:active{ transform: translateY(0) scale(.98) }
+    .btn span{ letter-spacing:.04em }
+    .btn .arrow{
+      width:22px; height:22px; border-radius:999px; display:grid; place-items:center;
+      background: linear-gradient(180deg, #19223a, #131d33);
+      border:1px solid rgba(255,255,255,.08); color:#cfeaff;
+      box-shadow: inset 0 0 8px rgba(23,215,255,.25), 0 0 16px rgba(23,215,255,.2);
+    }
+
+    .credits{
+      margin-top:16px; display:flex; justify-content:space-between; align-items:center;
+      color:var(--muted); font-size:12px; transform: translateZ(20px);
+    }
+    .switch{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:6px 8px; border-radius:999px; border:var(--ring); background: #0e1524;
+      box-shadow: var(--shadow);
+    }
+    .switch button{
+      background:#111a2e; border:1px solid rgba(255,255,255,.08);
+      color:var(--text); padding:6px 10px; border-radius:8px; cursor:pointer;
+      transition: all .2s ease;
+    }
+    .switch button.active{ background:#18243f; box-shadow: inset 0 0 12px rgba(23,215,255,.22), 0 0 10px rgba(23,215,255,.12) }
+
+    /* Footer hint */
+    .hint{
+      position:fixed; bottom:14px; left:50%; transform: translateX(-50%);
+      color:var(--muted); font-size:12px; opacity:.75; z-index:2; user-select:none;
+      text-shadow:0 0 10px rgba(0,0,0,.6);
+    }
+
+    /* Animations */
+    @keyframes floaty{ 0%,100%{ transform: translateY(8px)} 50%{ transform: translateY(0)} }
+    @keyframes blink{ 0%,70%{ opacity:1 } 71%,100%{ opacity:0 } }
+    .caret{ display:inline-block; width:10px; animation: blink 1s steps(2) infinite }
+
+    /* Responsive */
+    @media (max-width:560px){
+      .name{ font-size:24px }
+      .avatar{ width:56px; height:56px }
+      .btn{ padding:13px 14px }
+      .hud{ left:12px; top:12px }
+      .hint{ font-size:11px }
+    }
+  </style>
+</head>
+<body data-theme="neo">
+  <!-- Intro Gate -->
+  <div id="gate" aria-label="intro gate">
+    <div class="gate-inner">
+      <div class="gate-title">click to enter…</div>
+      <div class="muted">sound and effects will start</div>
+      <div style="height:10px"></div>
+      <button id="enterBtn" class="gate-enter" aria-label="enter experience">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 12h14" stroke="#a6eaff" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M12 5l7 7-7 7" stroke="#ff99a7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>enter</span>
+      </button>
+      <div class="muted">press Enter as well</div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud" role="toolbar" aria-label="controls">
+    <button id="audioToggle" class="pill" aria-pressed="false" title="toggle sound">🔈 sound</button>
+    <button id="fxToggle" class="pill" aria-pressed="true" title="toggle visuals">✨ fx</button>
+  </div>
+
+  <!-- Scene -->
+  <div class="scene" id="scene" aria-live="polite">
+    <div class="hero"></div>
+    <div class="silhouette"></div>
+    <canvas id="sparks"></canvas>
+
+    <div class="stage">
+      <section class="card" id="card" role="region" aria-label="profile card" tabindex="0">
+        <div class="rim"></div>
+        <div class="gloss"></div>
+
+        <div class="top">
+          <div class="avatar" aria-hidden="true"></div>
+          <div>
+            <div class="name">mr wick</div>
+            <div class="tag">focus. commit. deliver.</div>
+            <div class="type" id="typewriter" aria-label="typewriter status"></div>
+          </div>
+        </div>
+
+        <nav class="links" aria-label="links">
+          <a class="btn" href="https://mrwick-007.github.io" target="_blank" rel="noreferrer noopener">
+            <span>Website</span><span class="arrow">↗</span>
+          </a>
+          <a class="btn" href="https://twitter.com" target="_blank" rel="noreferrer noopener">
+            <span>Twitter</span><span class="arrow">↗</span>
+          </a>
+          <a class="btn" href="https://github.com/mrwick-007" target="_blank" rel="noreferrer noopener">
+            <span>GitHub</span><span class="arrow">↗</span>
+          </a>
+        </nav>
+
+        <div class="credits">
+          <div>made with grit and caffeine</div>
+          <div class="switch" role="tablist" aria-label="theme">
+            <button id="themeNeo" role="tab" aria-selected="true" class="active">neo</button>
+            <button id="themeNoir" role="tab" aria-selected="false">noir</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="hint">move mouse or tilt phone • press R to reset tilt • M to mute • T to toggle theme</div>
+
+  <audio id="ambience" preload="auto">
+    <!-- A short, non-copyright, generated-like tone using base64 so it's self-contained.
+         It is a soft ambient loop (approx ~6s). -->
+    <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQAAACAAAC4AAAACAAACcQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAUAAABxAAAATgAABG5vdGU6IGdlbmVyYXRlZCBzbW9vdGggbG9vcCB0b25lIGZvciBiZy4AAAD/4QBQbWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYf//Z" type="audio/mp3">
+  </audio>
+
+  <script>
+    ;(() => {
+      const d = document;
+      const byId = id => d.getElementById(id);
+
+      // Elements
+      const gate = byId('gate');
+      const enterBtn = byId('enterBtn');
+      const audioToggle = byId('audioToggle');
+      const fxToggle = byId('fxToggle');
+      const ambience = byId('ambience');
+      const scene = byId('scene');
+      const card = byId('card');
+      const sparks = byId('sparks');
+      const typeArea = byId('typewriter');
+      const themeNeo = byId('themeNeo');
+      const themeNoir = byId('themeNoir');
+
+      // State
+      let audioOn = false;
+      let fxOn = true;
+      let entered = false;
+
+      // Intro gate
+      const enter = async () => {
+        if (entered) return;
+        entered = true;
+        gate.classList.add('hidden');
+        // Start audio politely
+        try {
+          ambience.loop = true;
+          await ambience.play();
+          audioOn = true;
+          audioToggle.setAttribute('aria-pressed','true');
+          audioToggle.textContent = '🔊 sound';
+        } catch (err) {
+          // Autoplay blocked; leave as muted until user toggles
+          audioOn = false;
+        }
+        startTypewriter();
+        startSparks();
+      };
+
+      enterBtn.addEventListener('click', enter);
+      d.addEventListener('keydown', e => { if (e.key === 'Enter') enter(); });
+
+      // Audio toggle
+      audioToggle.addEventListener('click', async () => {
+        if (!audioOn) {
+          try { await ambience.play(); audioOn = true; audioToggle.textContent = '🔊 sound'; audioToggle.setAttribute('aria-pressed','true'); }
+          catch(e){ /* ignore */ }
+        } else {
+          ambience.pause(); audioOn = false; audioToggle.textContent = '🔈 sound'; audioToggle.setAttribute('aria-pressed','false');
+        }
+      });
+
+      // FX toggle
+      fxToggle.addEventListener('click', () => {
+        fxOn = !fxOn;
+        fxToggle.setAttribute('aria-pressed', String(fxOn));
+        fxToggle.textContent = fxOn ? '✨ fx' : '⚪ fx';
+        sparks.style.display = fxOn ? 'block' : 'none';
+      });
+
+      // Theme switch
+      function setTheme(name){
+        document.body.setAttribute('data-theme', name);
+        if(name === 'neo'){
+          themeNeo.classList.add('active'); themeNeo.setAttribute('aria-selected','true');
+          themeNoir.classList.remove('active'); themeNoir.setAttribute('aria-selected','false');
+        } else {
+          themeNoir.classList.add('active'); themeNoir.setAttribute('aria-selected','true');
+          themeNeo.classList.remove('active'); themeNeo.setAttribute('aria-selected','false');
+        }
+      }
+      themeNeo.addEventListener('click', () => setTheme('neo'));
+      themeNoir.addEventListener('click', () => setTheme('noir'));
+      d.addEventListener('keydown', e => {
+        if (e.key.toLowerCase() === 't') setTheme(document.body.getAttribute('data-theme') === 'neo' ? 'noir' : 'neo');
+        if (e.key.toLowerCase() === 'm') audioToggle.click();
+      });
+
+      // Parallax tilt for card and layers
+      let tiltX = 0, tiltY = 0, targetX = 0, targetY = 0;
+      const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+      function onMove(x, y, w, h){
+        const rx = ((y / h) - .5) * -14; // rotateX
+        const ry = ((x / w) - .5) * 16;  // rotateY
+        targetX = clamp(rx, -18, 18);
+        targetY = clamp(ry, -20, 20);
+      }
+      scene.addEventListener('mousemove', e => {
+        const rect = scene.getBoundingClientRect();
+        onMove(e.clientX - rect.left, e.clientY - rect.top, rect.width, rect.height);
+      });
+      // Touch
+      scene.addEventListener('touchmove', e => {
+        const t = e.touches[0];
+        if(!t) return;
+        const rect = scene.getBoundingClientRect();
+        onMove(t.clientX - rect.left, t.clientY - rect.top, rect.width, rect.height);
+      }, {passive:true});
+
+      // Device motion (tilt phone)
+      let motionAllowed = false;
+      async function enableMotion(){
+        try{
+          if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission){
+            const res = await DeviceMotionEvent.requestPermission();
+            motionAllowed = res === 'granted';
+          } else {
+            motionAllowed = true;
+          }
+        }catch(_){}
+      }
+      enterBtn.addEventListener('click', enableMotion);
+      window.addEventListener('devicemotion', (e)=>{
+        if (!motionAllowed) return;
+        const ax = e.accelerationIncludingGravity?.x || 0;
+        const ay = e.accelerationIncludingGravity?.y || 0;
+        targetY = clamp(ax * 2.2, -18, 18);
+        targetX = clamp(-ay * 2.2, -16, 16);
+      });
+
+      // Reset tilt
+      d.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'r'){ targetX=0; targetY=0; } });
+
+      // RAF loop for smooth interpolation
+      function raf(){
+        tiltX += (targetX - tiltX) * 0.08;
+        tiltY += (targetY - tiltY) * 0.08;
+        card.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(0)`;
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+
+      // Typewriter effect
+      const lines = [
+        '“I once was an admirer of peace.',
+        'Then peace asked a price.”',
+        '— welcome to the table.'
+      ];
+      let ln = 0, ch = 0, typing = true;
+      function startTypewriter(){
+        typeArea.innerHTML = '';
+        ln = 0; ch = 0; typing = true;
+        tick();
+      }
+      function tick(){
+        if (!typing) return;
+        const current = lines[ln];
+        typeArea.innerHTML = current.slice(0, ch) + '<span class="caret">█</span>';
+        ch++;
+        let delay = 28 + Math.random()*45;
+        if (ch > current.length){
+          typeArea.innerHTML = current + '<span class="caret">█</span>';
+          ch = 0; ln++;
+          delay = 900;
+          if (ln >= lines.length){
+            typing = false;
+            setTimeout(()=>{ loopErase(); }, 1600);
+            return;
+          }
+        }
+        setTimeout(tick, delay);
+      }
+      function loopErase(){
+        const full = 'choose your path';
+        let idx = 0;
+        typeArea.innerHTML = '';
+        (function typeLoop(){
+          typeArea.innerHTML = full.slice(0, idx) + '<span class="caret">█</span>';
+          idx++;
+          if (idx<=full.length) setTimeout(typeLoop, 40);
+          else setTimeout(()=>loopCycle(), 1000);
+        })();
+      }
+      function loopCycle(){
+        const options = ['website', 'twitter', 'github', 'focus mode'];
+        let i = 0;
+        (function cycle(){
+          typeArea.innerHTML = '→ ' + options[i] + '<span class="caret">█</span>';
+          i = (i+1) % options.length;
+          setTimeout(cycle, 1200);
+        })();
+      }
+
+      // Sparks particle system (GPU-friendly)
+      function startSparks(){
+        const ctx = sparks.getContext('2d');
+        const DPR = Math.min(window.devicePixelRatio || 1, 2);
+        let w, h;
+        function resize(){
+          w = sparks.clientWidth; h = sparks.clientHeight;
+          sparks.width = Math.floor(w * DPR);
+          sparks.height = Math.floor(h * DPR);
+          ctx.scale(DPR, DPR);
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const N = 70;
+        const parts = new Array(N).fill(0).map(() => spawn());
+        function spawn(){
+          const x = Math.random()*w;
+          const y = Math.random()*h;
+          const v = .2 + Math.random()*1.2;
+          const a = Math.random()*Math.PI*2;
+          const life = 2000 + Math.random()*4000;
+          const size = 1 + Math.random()*2.4;
+          const hue = Math.random() < .55 ? 200 : 350; // cyan/red
+          return {x,y,vx:Math.cos(a)*v, vy:Math.sin(a)*v, life, max:life, size, hue};
+        }
+
+        let last = performance.now();
+        (function loop(now){
+          if (!fxOn){ requestAnimationFrame(loop); return; }
+          const dt = Math.min(50, now-last); last=now;
+
+          ctx.clearRect(0,0,w,h);
+          // subtle vignette
+          const grd = ctx.createRadialGradient(w*.5,h*.55,10, w*.5,h*.55, Math.max(w,h)*.7);
+          grd.addColorStop(0,'rgba(0,0,0,0)');
+          grd.addColorStop(1,'rgba(0,0,0,.35)');
+          ctx.fillStyle = grd; ctx.fillRect(0,0,w,h);
+
+          for (let p of parts){
+            p.life -= dt;
+            if (p.life <= 0){
+              Object.assign(p, spawn()); p.life *= 0.8;
+            }
+            p.x += p.vx * dt * 0.06;
+            p.y += p.vy * dt * 0.06;
+
+            // wrap
+            if (p.x < -10) p.x = w+10; if (p.x > w+10) p.x = -10;
+            if (p.y < -10) p.y = h+10; if (p.y > h+10) p.y = -10;
+
+            const alpha = Math.max(0, p.life / p.max);
+            ctx.beginPath();
+            ctx.fillStyle = `hsla(${p.hue}, 90%, 62%, ${.18 + .55*alpha})`;
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+            ctx.fill();
+
+            // trail
+            ctx.beginPath();
+            ctx.strokeStyle = `hsla(${p.hue}, 90%, 62%, ${.08 + .35*alpha})`;
+            ctx.lineWidth = p.size * .6;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x - p.vx*18, p.y - p.vy*18);
+            ctx.stroke();
+          }
+          requestAnimationFrame(loop);
+        })(performance.now());
+      }
+
+      // Accessibility focus ring improvement
+      card.addEventListener('focus', () => { card.style.boxShadow = '0 0 0 3px rgba(23,215,255,.35), var(--shadow), var(--glow)'; });
+      card.addEventListener('blur', () => { card.style.boxShadow = 'var(--shadow), var(--glow)'; });
+    })();
+  </script>
+</body>
+</html>
