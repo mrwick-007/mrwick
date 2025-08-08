@@ -1,376 +1,488 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0c0f14" />
+  <!-- Meta -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>mr wick</title>
+  <meta name="description" content="A sleek, bold, and elegant John Wick–themed landing page." />
+  <meta name="theme-color" content="#1b0f28" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+  <!-- Fonts (preconnect + Orbitron) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Performance hints (optional, safe to keep even if files are missing) -->
+  <link rel="preload" href="bg1.jpg" as="image" />
+  <link rel="preload" href="profile.jpg" as="image" />
+  <link rel="preload" href="background.mp3" as="audio" />
+
   <style>
-    :root {
-      /* Adjust these to match your screenshot palette */
-      --bg-0:#0c0f14;
-      --bg-1:#0a0d12;
-      --bg-2:#121722;
-      --ink:#e8ecf3;
-      --muted:#9aa4b2;
-      --brand:#ff304d;     /* primary accent */
-      --rim:#19c6ff;       /* secondary accent */
-      --card:#0f1521f2;
-      --ring:1px solid rgba(255,255,255,.06);
-      --shadow: 0 8px 24px rgba(0,0,0,.45);
-      --radius:16px;
-      --link-bg:#0f1726;
-      --link-bg-hover:#151f34;
-      --focus:0 0 0 3px rgba(25,198,255,.3);
+    :root{
+      --bg:#0e0814;
+      --card:#28183f;
+      --card-opaque: rgba(40, 24, 63, 0.88);
+      --ink:#eae6ff;
+      --muted:#b7aee0;
+      --accent:#9b5cff; /* neon violet */
+      --accent-2:#00d1ff; /* cyan edge light */
+      --glow: 0 0 18px rgba(155,92,255,0.5), 0 0 36px rgba(0,209,255,0.15);
+      --radius: 18px;
+      --shadow: 0 12px 40px rgba(0,0,0,0.45);
+      --blur: 8px;
     }
 
-    /* Global */
-    * { box-sizing: border-box }
-    html, body { height: 100% }
-    body {
-      margin: 0;
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+
+    html, body{
+      height:100%;
+      font-family:'Orbitron', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
       color: var(--ink);
-      background:
-        radial-gradient(700px 600px at 75% 20%, rgba(255,48,77,.12), transparent 60%),
-        radial-gradient(800px 700px at 20% 85%, rgba(25,198,255,.10), transparent 60%),
-        linear-gradient(120deg, var(--bg-1), var(--bg-0) 40%, var(--bg-2) 100%);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      overflow:hidden;
     }
 
-    /* Container */
-    .wrap {
-      min-height: 100dvh;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
+    /* Background image + subtle vignette + scanline effect (very light) */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(1200px 600px at 75% 10%, rgba(0,209,255,0.08), transparent 60%),
+        radial-gradient(900px 500px at 20% 70%, rgba(155,92,255,0.10), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.4)),
+        url('bg1.jpg') no-repeat center/cover;
+      will-change: transform, opacity;
+      z-index:-2;
     }
 
-    /* Header */
-    header {
-      position: relative;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--ink);
-    }
-    .logo {
-      width: 28px; height: 28px; border-radius: 8px;
-      background:
-        conic-gradient(from 210deg, rgba(255,48,77,.85), rgba(25,198,255,.7), rgba(255,48,77,.85));
-      box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 6px 16px rgba(0,0,0,.45);
-    }
-    .title {
-      font-weight: 800; letter-spacing: .10em; text-transform: lowercase; font-size: 18px;
-      position: relative;
-    }
-    .shimmer {
-      position: absolute; inset: 0;
-      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.10) 20%, transparent 40%);
-      transform: translateX(-100%);
-      pointer-events: none;
-      will-change: transform;
+    /* Ultra-light scanlines for the cinematic vibe */
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.018),
+        rgba(255,255,255,0.018) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      mix-blend-mode: overlay;
+      opacity:0.35;
+      z-index:-1;
     }
 
-    /* Hero */
-    .hero {
-      display: grid;
-      place-items: center;
-      padding: clamp(16px, 4vw, 28px);
+    /* Entry screen (tap/click to enter) */
+    #entry-screen{
+      position: fixed;
+      inset:0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(var(--blur));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      z-index:1000;
+      cursor:pointer;
+      transition: opacity .3s ease;
+      user-select:none;
     }
-    .card {
-      width: min(92vw, 720px);
-      border-radius: var(--radius);
-      background:
-        linear-gradient(180deg, rgba(16,22,36,.9), rgba(16,22,36,.7)),
-        radial-gradient(200px 160px at 15% 0%, rgba(25,198,255,.10), transparent 60%),
-        radial-gradient(220px 200px at 85% 100%, rgba(255,48,77,.10), transparent 60%);
-      border: var(--ring);
+
+    .entry-inner{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:16px;
+    }
+
+    .enter-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background: linear-gradient(135deg, rgba(155,92,255,0.18), rgba(0,209,255,0.18));
+      border:1px solid rgba(155,92,255,0.45);
+      padding:12px 22px;
+      border-radius:999px;
+      box-shadow: var(--glow);
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .enter-pill:hover{
+      transform: translateY(-2px);
+      border-color: rgba(0,209,255,0.55);
+      box-shadow: 0 0 22px rgba(0,209,255,0.35), 0 0 36px rgba(155,92,255,0.25);
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size:12px;
+      letter-spacing:1px;
+      opacity:0.85;
+    }
+
+    /* Audio control */
+    #audio-control{
+      position: absolute;
+      top:18px;
+      left:18px;
+      display:none;
+      z-index:10;
+      background: rgba(27, 15, 40, 0.8);
+      border:1px solid rgba(155,92,255,0.35);
+      border-radius:12px;
       box-shadow: var(--shadow);
-      padding: clamp(18px, 3vw, 26px);
-      backdrop-filter: saturate(1.1);
+      color:#fff;
+      padding:8px 10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
     }
 
-    .head {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 10px;
+    .btn-icon{
+      cursor:pointer;
+      font-size:18px;
+      line-height:1;
+      padding:6px 8px;
+      border-radius:8px;
+      border:1px solid transparent;
+      transition: transform .1s ease, border-color .2s ease, background .2s ease;
     }
-    .avatar {
-      width: 56px; height: 56px; border-radius: 50%;
+    .btn-icon:hover{
+      transform: translateY(-1px);
+      border-color: rgba(155,92,255,0.45);
+      background: rgba(155,92,255,0.08);
+    }
+
+    #volume-wrap{
+      position:relative;
+    }
+    #volume-slider{
+      display:none;
+      width:120px;
+      accent-color: var(--accent);
+    }
+    #volume-wrap:hover #volume-slider{
+      display:block;
+    }
+
+    /* Center card */
+    .center-box{
+      position: absolute;
+      top:50%;
+      left:50%;
+      transform: translate(-50%,-50%);
+      width:min(420px, 92vw);
+      background: var(--card-opaque);
+      border:1px solid rgba(155,92,255,0.45);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow), var(--glow);
+      padding:56px 38px 40px;
+      text-align:center;
+      display:none;
+      overflow:hidden;
+      isolation:isolate;
+    }
+
+    /* Subtle corner highlight */
+    .center-box::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border-radius: inherit;
       background:
-        radial-gradient(100px 90px at 70% 30%, rgba(255,255,255,.14), transparent 60%),
-        conic-gradient(from 210deg, rgba(255,48,77,.8), rgba(25,198,255,.75), rgba(255,48,77,.8));
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 6px 16px rgba(0,0,0,.45);
-      flex: 0 0 auto;
+        radial-gradient(500px 200px at 110% -10%, rgba(0,209,255,0.18), transparent 40%),
+        radial-gradient(300px 150px at -10% 110%, rgba(155,92,255,0.18), transparent 40%);
+      pointer-events:none;
+      mix-blend-mode: screen;
+      opacity:0.8;
+      z-index:-1;
     }
-    .name { font-weight: 800; letter-spacing: .10em; font-size: 24px; text-transform: lowercase }
-    .tag  { color: var(--muted); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; margin-top: 2px }
 
-    .blurb {
+    .profile-pic{
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      object-fit:cover;
+      margin:0 auto 16px;
+      border:2px solid rgba(0,209,255,0.5);
+      box-shadow: 0 0 18px rgba(0,209,255,0.35);
+    }
+
+    h1{
+      font-size:26px;
+      letter-spacing:2px;
+      text-transform:lowercase;
+      margin-bottom:18px;
+      color:#fff;
+      text-shadow: 0 0 10px rgba(255,255,255,0.35);
+    }
+
+    .tagline{
+      font-size:12px;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-      margin-top: 10px;
+      letter-spacing:2.2px;
+      text-transform:uppercase;
+      margin-bottom:22px;
+      opacity:0.9;
     }
 
-    /* Links */
-    .links {
-      margin-top: 16px;
-      display: grid;
-      gap: 10px;
+    .icons{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+      margin-top:6px;
     }
-    .btn {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 13px 14px;
-      border-radius: 12px;
-      background: var(--link-bg);
-      border: var(--ring);
-      color: var(--ink);
-      text-decoration: none;
-      transition: background .18s ease, transform .12s ease, letter-spacing .12s ease;
-      will-change: transform;
+    .link{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      color:white;
+      text-decoration:none;
+      font-size:16px;
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid rgba(155,92,255,0.4);
+      background: linear-gradient(135deg, rgba(155,92,255,0.10), rgba(0,209,255,0.08));
+      transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+      width: 100%;
+      justify-content:center;
     }
-    .btn:hover { background: var(--link-bg-hover); transform: translateY(-1px) }
-    .btn:active { transform: translateY(0) scale(.98) }
-    .btn span { letter-spacing: .02em }
-    .arrow {
-      width: 22px; height: 22px; border-radius: 999px;
-      display: grid; place-items: center;
-      background: linear-gradient(180deg, #18243a, #131c30);
-      border: 1px solid rgba(255,255,255,.08);
-      color: #cfeaff;
-      box-shadow: inset 0 0 8px rgba(25,198,255,.22), 0 0 10px rgba(25,198,255,.12);
-      font-size: 13px;
+    .link:hover{
+      transform: translateY(-2px);
+      border-color: rgba(0,209,255,0.6);
+      box-shadow: var(--glow);
+      background: linear-gradient(135deg, rgba(155,92,255,0.16), rgba(0,209,255,0.12));
     }
 
-    /* Audio player (lightweight) */
-    .audio {
-      margin-top: 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      border-radius: 12px;
-      border: var(--ring);
-      background: #0f1726;
+    .sep{
+      height:1px;
+      width:100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.25), transparent);
+      margin: 6px 0 4px;
+      opacity:0.6;
     }
-    .audio button {
-      appearance: none;
-      border: var(--ring);
-      background: #111b2e;
-      color: var(--ink);
-      padding: 8px 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background .18s ease, transform .12s ease;
-    }
-    .audio button:hover { background: #15233b }
-    .audio button:active { transform: scale(.98) }
-    .time { color: var(--muted); font-size: 12px }
 
-    /* Footer */
-    footer {
-      padding: 14px 16px 18px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
+    /* Reduced motion preference */
+    @media (prefers-reduced-motion: reduce){
+      *, *::before, *::after{
+        animation:none !important;
+        transition:none !important;
+      }
+      body::after{ display:none; }
     }
-    .hint { font-size: 12px; opacity: .85 }
-    .prefers {
-      display: inline-flex; align-items: center; gap: 8px;
-      border: var(--ring); border-radius: 999px; padding: 6px 8px;
-      background: #0f1726;
-    }
-    .prefers button {
-      border: 1px solid rgba(255,255,255,.08);
-      background: #111b2e; color: var(--ink);
-      padding: 6px 10px; border-radius: 8px; cursor: pointer;
-      transition: background .18s ease;
-    }
-    .prefers button.active { background: #162844 }
 
-    /* Focus ring */
-    :focus-visible { outline: none; box-shadow: var(--focus) }
-
-    /* Motion-safe */
-    @media (prefers-reduced-motion: reduce) {
-      .shimmer { display: none }
-      .btn, .audio button { transition: none }
+    /* Small screens */
+    @media (max-width:420px){
+      .center-box{ padding:44px 22px 30px; }
+      h1{ font-size:22px; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <a class="brand" href="#">
-        <div class="logo" aria-hidden="true"></div>
-        <div class="title">
-          mr wick
-          <span class="shimmer" aria-hidden="true"></span>
-        </div>
-      </a>
-      <div class="prefers" role="group" aria-label="display options">
-        <button id="contrast" class="active" type="button" title="boost contrast">contrast</button>
-        <button id="muteFx" type="button" title="reduce fx">fx</button>
+  <!-- Entry overlay -->
+  <div id="entry-screen" role="button" aria-label="Click or press Enter to enter">
+    <div class="entry-inner">
+      <div class="enter-pill">
+        <span>click to enter</span> <span>•</span> <span>tap to enter</span>
       </div>
-    </header>
+      <div class="hint">audio starts after you enter • press M to mute</div>
+    </div>
+  </div>
 
-    <main class="hero">
-      <section class="card" role="region" aria-label="profile">
-        <div class="head">
-          <div class="avatar" aria-hidden="true"></div>
-          <div>
-            <div class="name">mr wick</div>
-            <div class="tag">focus. commit. deliver.</div>
-          </div>
-        </div>
+  <!-- Audio UI -->
+  <div id="audio-control" aria-live="polite">
+    <button id="play-pause" class="btn-icon" title="Play/Pause (Space)">⏸</button>
+    <button id="mute-btn" class="btn-icon" title="Mute/Unmute (M)">🔊</button>
+    <div id="volume-wrap" class="btn-icon" title="Volume">
+      🎚
+      <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.2" aria-label="Volume" />
+    </div>
+  </div>
 
-        <p class="blurb">
-          Precision over spectacle. Purpose-built, fast, and faithful to the theme—elevated with micro‑detail, never noise.
-        </p>
+  <!-- Background audio (unmuted only after user gesture) -->
+  <audio id="bg-music" preload="none" loop muted></audio>
 
-        <nav class="links" aria-label="primary">
-          <a class="btn" href="https://mrwick-007.github.io" target="_blank" rel="noreferrer noopener">
-            <span>Website</span><span class="arrow">↗</span>
-          </a>
-          <a class="btn" href="https://twitter.com" target="_blank" rel="noreferrer noopener">
-            <span>Twitter</span><span class="arrow">↗</span>
-          </a>
-          <a class="btn" href="https://github.com/mrwick-007" target="_blank" rel="noreferrer noopener">
-            <span>GitHub</span><span class="arrow">↗</span>
-          </a>
-        </nav>
+  <!-- Card -->
+  <div class="center-box" aria-label="Profile card">
+    <img src="profile.jpg" alt="Profile" class="profile-pic" decoding="async">
+    <h1>mr wick</h1>
+    <div class="tagline">welcome agent • guns loaded</div>
 
-        <!-- Lightweight audio player: replace src with your attached music file path -->
-        <div class="audio" role="region" aria-label="music">
-          <button id="play" type="button" aria-pressed="false">▶ Play</button>
-          <button id="loop" type="button" aria-pressed="true">🔁 Loop</button>
-          <span class="time" id="time">0:00</span>
-          <audio id="track" preload="metadata">
-            <!-- Replace the src below with your attached file, e.g., music/theme.mp3 -->
-            <source src="music/theme.mp3" type="audio/mpeg" />
-          </audio>
-        </div>
-      </section>
-    </main>
+    <div class="sep"></div>
 
-    <footer>
-      <div class="hint">fast by design • zero libraries • mobile‑first</div>
-      <div class="hint">press C: contrast • X: reduce fx</div>
-    </footer>
+    <div class="icons">
+      <a class="link" href="https://mrwick.my.canva.site/" target="_blank" rel="noopener">Website</a>
+      <a class="link" href="https://x.com/__mrwick__/" target="_blank" rel="noopener">Twitter</a>
+    </div>
   </div>
 
   <script>
-    // Minimal, performance-safe JS
-    (function() {
-      const shimmer = document.querySelector('.shimmer');
-      const prefersReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Elements
+    const entryScreen   = document.getElementById('entry-screen');
+    const centerBox     = document.querySelector('.center-box');
+    const audioControl  = document.getElementById('audio-control');
+    const bgMusic       = document.getElementById('bg-music');
+    const volumeSlider  = document.getElementById('volume-slider');
+    const playPause     = document.getElementById('play-pause');
+    const muteBtn       = document.getElementById('mute-btn');
 
-      // Shimmer animation (GPU-friendly, 1 element)
-      if (shimmer && !prefersReduce) {
-        let t = -100;
-        const loop = () => {
-          t += 0.8;
-          if (t > 120) t = -100;
-          shimmer.style.transform = 'translateX(' + t + '%)';
-          requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
+    // Playlist (add more files here if you want)
+    const songs = ['background.mp3'];
+
+    // Title animation (clean, no url flash)
+    const phrases = ["mr wick", "welcome agent", "guns loaded"];
+    let phraseIndex = 0, charIndex = 0, isDeleting = false, cursorVisible = true;
+    let titleTimerId = null;
+
+    function animateTitle(){
+      const current = phrases[phraseIndex];
+      const text = current.substring(0, charIndex);
+      document.title = text + (cursorVisible ? ' |' : '');
+
+      if(!isDeleting && charIndex < current.length){
+        charIndex++;
+      }else if(isDeleting && charIndex > 0){
+        charIndex--;
+      }else if(!isDeleting && charIndex === current.length){
+        setTimeout(()=> isDeleting = true, 900);
+      }else if(isDeleting && charIndex === 0){
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+      }
+      titleTimerId = setTimeout(animateTitle, 150);
+    }
+
+    // Blink cursor
+    setInterval(()=> cursorVisible = !cursorVisible, 500);
+    animateTitle();
+
+    // Respect hidden tab (reduce CPU if not visible)
+    document.addEventListener('visibilitychange', () => {
+      if(document.hidden){
+        if(titleTimerId) clearTimeout(titleTimerId);
+      }else{
+        animateTitle();
+      }
+    });
+
+    // Load saved settings
+    const savedVol = parseFloat(localStorage.getItem('mrw_vol'));
+    if(!Number.isNaN(savedVol)){
+      volumeSlider.value = String(savedVol);
+    }
+    const savedMuted = localStorage.getItem('mrw_muted') === '1';
+
+    bgMusic.volume = parseFloat(volumeSlider.value);
+    bgMusic.muted  = true; // will unmute on entry
+
+    // Volume change
+    volumeSlider.addEventListener('input', function(){
+      bgMusic.volume = parseFloat(this.value);
+      localStorage.setItem('mrw_vol', bgMusic.volume.toFixed(2));
+    });
+
+    function setMute(state){
+      bgMusic.muted = state;
+      muteBtn.textContent = state ? '🔇' : '🔊';
+      localStorage.setItem('mrw_muted', state ? '1' : '0');
+    }
+
+    function setPlayingUI(isPlaying){
+      playPause.textContent = isPlaying ? '⏸' : '▶';
+    }
+
+    // Entry: start music, show card, show controls
+    async function enterSite(){
+      // choose random song
+      const randomSong = songs[Math.floor(Math.random() * songs.length)];
+      if(bgMusic.src.endsWith(randomSong) === false){
+        bgMusic.src = randomSong;
       }
 
-      // Audio controls
-      const playBtn = document.getElementById('play');
-      const loopBtn = document.getElementById('loop');
-      const timeEl = document.getElementById('time');
-      const track = document.getElementById('track');
+      entryScreen.style.opacity = '0';
+      setTimeout(()=>{ entryScreen.style.display = 'none'; }, 220);
 
-      let playing = false;
-      track.loop = true;
+      centerBox.style.display = 'block';
+      audioControl.style.display = 'flex';
 
-      function fmt(sec) {
-        if (!isFinite(sec)) return '0:00';
-        const m = Math.floor(sec / 60);
-        const s = Math.floor(sec % 60);
-        return m + ':' + (s < 10 ? '0' + s : s);
+      // apply saved mute state after gesture
+      setMute(savedMuted);
+
+      try{
+        await bgMusic.play();
+        // If muted and play was allowed, keep it muted per saved state
+        setPlayingUI(true);
+      }catch(e){
+        // If play fails (e.g., iOS edge case), show paused state
+        setPlayingUI(false);
       }
-      function updateTime() {
-        timeEl.textContent = fmt(track.currentTime || 0);
-      }
-      track.addEventListener('timeupdate', updateTime);
-      track.addEventListener('loadedmetadata', updateTime);
+    }
 
-      playBtn.addEventListener('click', async () => {
-        if (!playing) {
-          try {
-            await track.play();
-            playing = true;
-            playBtn.textContent = '⏸ Pause';
-            playBtn.setAttribute('aria-pressed','true');
-          } catch(e) {
-            // Autoplay restrictions require user gesture; clicking counts.
-          }
-        } else {
-          track.pause();
-          playing = false;
-          playBtn.textContent = '▶ Play';
-          playBtn.setAttribute('aria-pressed','false');
+    entryScreen.addEventListener('click', enterSite);
+    window.addEventListener('keydown', (e)=>{
+      if(entryScreen.style.display !== 'none' && (e.key === 'Enter' || e.key === ' ')){
+        e.preventDefault();
+        enterSite();
+      }
+    });
+
+    // Controls
+    playPause.addEventListener('click', async ()=>{
+      if(bgMusic.paused){
+        try{
+          await bgMusic.play();
+          setPlayingUI(true);
+        }catch(e){
+          setPlayingUI(false);
         }
-      });
-
-      loopBtn.addEventListener('click', () => {
-        track.loop = !track.loop;
-        loopBtn.setAttribute('aria-pressed', String(track.loop));
-        loopBtn.textContent = track.loop ? '🔁 Loop' : '➡ Once';
-      });
-
-      // Display options: contrast / fx
-      const contrast = document.getElementById('contrast');
-      const muteFx = document.getElementById('muteFx');
-
-      function setContrast(boost) {
-        document.documentElement.style.setProperty('--ink', boost ? '#eef3fb' : '#e8ecf3');
-        document.documentElement.style.setProperty('--muted', boost ? '#b0bac8' : '#9aa4b2');
+      }else{
+        bgMusic.pause();
+        setPlayingUI(false);
       }
-      function setFx(on) {
-        const body = document.body;
-        body.style.background = on
-          ? 'radial-gradient(700px 600px at 75% 20%, rgba(255,48,77,.12), transparent 60%), radial-gradient(800px 700px at 20% 85%, rgba(25,198,255,.10), transparent 60%), linear-gradient(120deg, var(--bg-1), var(--bg-0) 40%, var(--bg-2) 100%)'
-          : 'linear-gradient(120deg, var(--bg-1), var(--bg-0) 40%, var(--bg-2) 100%)';
+    });
+
+    muteBtn.addEventListener('click', ()=>{
+      setMute(!bgMusic.muted);
+    });
+
+    // Keyboard shortcuts (once inside)
+    window.addEventListener('keydown', (e)=>{
+      if(entryScreen.style.display !== 'none') return;
+
+      if(e.key === ' '){ // space: play/pause
+        e.preventDefault();
+        playPause.click();
       }
-      setContrast(true);
-      setFx(true);
+      if(e.key.toLowerCase() === 'm'){ // mute
+        e.preventDefault();
+        muteBtn.click();
+      }
+      if(e.key === 'ArrowUp'){
+        e.preventDefault();
+        volumeSlider.value = String(Math.min(1, parseFloat(volumeSlider.value) + 0.05));
+        volumeSlider.dispatchEvent(new Event('input'));
+      }
+      if(e.key === 'ArrowDown'){
+        e.preventDefault();
+        volumeSlider.value = String(Math.max(0, parseFloat(volumeSlider.value) - 0.05));
+        volumeSlider.dispatchEvent(new Event('input'));
+      }
+    });
 
-      contrast.addEventListener('click', () => {
-        const active = contrast.classList.toggle('active');
-        setContrast(active);
-      });
-      muteFx.addEventListener('click', () => {
-        const active = muteFx.classList.toggle('active');
-        setFx(active);
-      });
-
-      // Keyboard shortcuts
-      document.addEventListener('keydown', (e) => {
-        const k = e.key.toLowerCase();
-        if (k === 'c') contrast.click();
-        if (k === 'x') muteFx.click();
-      });
-    })();
+    // Update UI on play/pause events (covers mobile controls)
+    bgMusic.addEventListener('play', ()=> setPlayingUI(true));
+    bgMusic.addEventListener('pause',()=> setPlayingUI(false));
   </script>
 </body>
 </html>
